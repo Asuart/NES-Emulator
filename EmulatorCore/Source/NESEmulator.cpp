@@ -1,4 +1,6 @@
 #include "NESEmulator.h"
+#include <chrono>
+using namespace std::chrono;
 
 NesEmulator::NesEmulator() {
 	bus = new Bus(this);

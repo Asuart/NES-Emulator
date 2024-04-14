@@ -27,7 +27,6 @@ private:
 
 	Bus* bus;
 
-#pragma pack(push, 1)
 	union {
 		uint8_t ctrl;
 		struct {
@@ -64,7 +63,6 @@ private:
 			uint8_t verticalBlank : 1;
 		};
 	};
-#pragma pack(pop)
 
 	uint8_t scroll;
 	uint8_t address;
