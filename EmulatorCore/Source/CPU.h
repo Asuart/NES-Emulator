@@ -1,7 +1,6 @@
 #pragma once
 #include "Globals.h"
 #include "Bus.h"
-#include "MMC.h"
 #include "PPU.h"
 
 class Bus;
@@ -9,11 +8,12 @@ class Bus;
 class CPU {
 public:
 	uint64_t clock;
+	uint32_t stepClock;
 
 	CPU(Bus* interconnect);
 
 	void Reset();
-	void Step();
+	uint32_t Step();
 	void NMIException();
 
 private:
@@ -169,7 +169,7 @@ private:
 		Opcode(Opcode::AddressingMode::ABS, &CPU::ORA, "ORA", 4),
 		Opcode(Opcode::AddressingMode::ABS, &CPU::ASL, "ASL", 6, true),
 		Opcode(Opcode::AddressingMode::ABS, &CPU::SLO, "SLO", 3, true),
-		
+
 		Opcode(Opcode::AddressingMode::REL, &CPU::BPL, "BPL", 2, false, true),
 		Opcode(Opcode::AddressingMode::INDY, &CPU::ORA, "ORA", 5, false, true),
 		Opcode(Opcode::AddressingMode::IMPL, &CPU::KIL, "KIL", 3),
@@ -186,7 +186,7 @@ private:
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::ORA, "ORA", 4, false, true),
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::ASL, "ASL", 7, true),
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::SLO, "SLO", 3, true),
-		
+
 		Opcode(Opcode::AddressingMode::ABS, &CPU::JSR, "JSR", 6),
 		Opcode(Opcode::AddressingMode::INDX, &CPU::AND, "AND", 6),
 		Opcode(Opcode::AddressingMode::IMPL, &CPU::KIL, "KIL", 3),
@@ -203,7 +203,7 @@ private:
 		Opcode(Opcode::AddressingMode::ABS, &CPU::AND, "AND", 4),
 		Opcode(Opcode::AddressingMode::ABS, &CPU::ROL, "ROL", 6, true),
 		Opcode(Opcode::AddressingMode::ABS, &CPU::RLA, "RLA", 3, true),
-		
+
 		Opcode(Opcode::AddressingMode::REL, &CPU::BMI, "BMI", 2, false, true),
 		Opcode(Opcode::AddressingMode::INDY, &CPU::AND, "AND", 5, false, true),
 		Opcode(Opcode::AddressingMode::IMPL, &CPU::KIL, "KIL", 3),
@@ -220,7 +220,7 @@ private:
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::AND, "AND", 4, false, true),
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::ROL, "ROL", 7, true),
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::RLA, "RLA", 3, true),
-		
+
 		Opcode(Opcode::AddressingMode::IMPL, &CPU::RTI, "RTI", 6),
 		Opcode(Opcode::AddressingMode::INDX, &CPU::EOR, "EOR", 6),
 		Opcode(Opcode::AddressingMode::IMPL, &CPU::KIL, "KIL", 3),
@@ -237,7 +237,7 @@ private:
 		Opcode(Opcode::AddressingMode::ABS, &CPU::EOR, "EOR", 4),
 		Opcode(Opcode::AddressingMode::ABS, &CPU::LSR, "LSR", 6, true),
 		Opcode(Opcode::AddressingMode::ABS, &CPU::SRE, "SRE", 3, true),
-		
+
 		Opcode(Opcode::AddressingMode::REL, &CPU::BVC, "BVC", 2, false, true),
 		Opcode(Opcode::AddressingMode::INDY, &CPU::EOR, "EOR", 5, false, true),
 		Opcode(Opcode::AddressingMode::IMPL, &CPU::KIL, "KIL", 3),
@@ -248,13 +248,13 @@ private:
 		Opcode(Opcode::AddressingMode::ZPX, &CPU::SRE, "SRE", 3, true),
 		Opcode(Opcode::AddressingMode::IMPL, &CPU::CLI, "CLI", 2),
 		Opcode(Opcode::AddressingMode::ABSY, &CPU::EOR, "EOR", 4, false, true),
-		Opcode(Opcode::AddressingMode::IMPL, &CPU::NOP, "NOP", 3),
+		Opcode(Opcode::AddressingMode::IMPL, &CPU::NOP, "NOP", 2),
 		Opcode(Opcode::AddressingMode::ABSY, &CPU::SRE, "SRE", 3, true),
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::TOP, "TOP", 3),
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::EOR, "EOR", 4, false, true),
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::LSR, "LSR", 7, true),
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::SRE, "SRE", 3, true),
-		
+
 		Opcode(Opcode::AddressingMode::IMPL, &CPU::RTS, "RTS", 6),
 		Opcode(Opcode::AddressingMode::INDX, &CPU::ADC, "ADC", 6),
 		Opcode(Opcode::AddressingMode::IMPL, &CPU::KIL, "KIL", 3),
@@ -271,7 +271,7 @@ private:
 		Opcode(Opcode::AddressingMode::ABS, &CPU::ADC, "ADC", 4),
 		Opcode(Opcode::AddressingMode::ABS, &CPU::ROR, "ROR", 6, true),
 		Opcode(Opcode::AddressingMode::ABS, &CPU::RRA, "RRA", 3, true),
-		
+
 		Opcode(Opcode::AddressingMode::REL, &CPU::BVS, "BVS", 2, false, true),
 		Opcode(Opcode::AddressingMode::INDY, &CPU::ADC, "ADC", 5, false, true),
 		Opcode(Opcode::AddressingMode::IMPL, &CPU::KIL, "KIL", 3),
@@ -288,7 +288,7 @@ private:
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::ADC, "ADC", 4, false, true),
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::ROR, "ROR", 7, true),
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::RRA, "RRA", 3, true),
-		
+
 		Opcode(Opcode::AddressingMode::IMM, &CPU::DOP, "DOP", 3),
 		Opcode(Opcode::AddressingMode::INDX, &CPU::STA, "STA", 6, true),
 		Opcode(Opcode::AddressingMode::IMM, &CPU::DOP, "DOP", 3),
@@ -305,7 +305,7 @@ private:
 		Opcode(Opcode::AddressingMode::ABS, &CPU::STA, "STA", 4, true),
 		Opcode(Opcode::AddressingMode::ABS, &CPU::STX, "STX", 4, true),
 		Opcode(Opcode::AddressingMode::ABS, &CPU::SAX, "SAX", 3, true),
-		
+
 		Opcode(Opcode::AddressingMode::REL, &CPU::BCC, "BCC", 2, false, true),
 		Opcode(Opcode::AddressingMode::INDY, &CPU::STA, "STA", 6, true),
 		Opcode(Opcode::AddressingMode::IMPL, &CPU::KIL, "KIL", 3),
@@ -322,7 +322,7 @@ private:
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::STA, "STA", 5, true),
 		Opcode(Opcode::AddressingMode::ABSY, &CPU::SXA, "SXA", 3, true),
 		Opcode(Opcode::AddressingMode::ABSY, &CPU::AXA, "AXA", 3),
-		
+
 		Opcode(Opcode::AddressingMode::IMM, &CPU::LDY, "LDY", 2),
 		Opcode(Opcode::AddressingMode::INDX, &CPU::LDA, "LDA", 6),
 		Opcode(Opcode::AddressingMode::IMM, &CPU::LDX, "LDX", 2),
@@ -339,7 +339,7 @@ private:
 		Opcode(Opcode::AddressingMode::ABS, &CPU::LDA, "LDA", 4),
 		Opcode(Opcode::AddressingMode::ABS, &CPU::LDX, "LDX", 4),
 		Opcode(Opcode::AddressingMode::ABS, &CPU::LAX, "LAX", 3),
-		
+
 		Opcode(Opcode::AddressingMode::REL, &CPU::BCS, "BCS", 2, false, true),
 		Opcode(Opcode::AddressingMode::INDY, &CPU::LDA, "LDA", 5, false, true),
 		Opcode(Opcode::AddressingMode::IMPL, &CPU::KIL, "KIL", 3),
@@ -356,7 +356,7 @@ private:
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::LDA, "LDA", 4, false, true),
 		Opcode(Opcode::AddressingMode::ABSY, &CPU::LDX, "LDX", 4, false, true),
 		Opcode(Opcode::AddressingMode::ABSY, &CPU::LAX, "LAX", 3),
-		
+
 		Opcode(Opcode::AddressingMode::IMM, &CPU::CPY, "CPY", 2),
 		Opcode(Opcode::AddressingMode::INDX, &CPU::CMP, "CMP", 6),
 		Opcode(Opcode::AddressingMode::IMM, &CPU::DOP, "DOP", 3),
@@ -373,7 +373,7 @@ private:
 		Opcode(Opcode::AddressingMode::ABS, &CPU::CMP, "CMP", 4),
 		Opcode(Opcode::AddressingMode::ABS, &CPU::DEC, "DEC", 6, true),
 		Opcode(Opcode::AddressingMode::ABS, &CPU::DCP, "DCP", 3, true),
-		
+
 		Opcode(Opcode::AddressingMode::REL, &CPU::BNE, "BNE", 2, false, true),
 		Opcode(Opcode::AddressingMode::INDY, &CPU::CMP, "CMP", 5, false, true),
 		Opcode(Opcode::AddressingMode::IMPL, &CPU::KIL, "KIL", 3),
@@ -390,7 +390,7 @@ private:
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::CMP, "CMP", 4, false, true),
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::DEC, "DEC", 7, true),
 		Opcode(Opcode::AddressingMode::ABSX, &CPU::DCP, "DCP", 3, true),
-		
+
 		Opcode(Opcode::AddressingMode::IMM, &CPU::CPX, "CPX", 2),
 		Opcode(Opcode::AddressingMode::INDX, &CPU::SBC, "SBC", 6),
 		Opcode(Opcode::AddressingMode::IMM, &CPU::DOP, "DOP", 3),
@@ -407,7 +407,7 @@ private:
 		Opcode(Opcode::AddressingMode::ABS, &CPU::SBC, "SBC", 4),
 		Opcode(Opcode::AddressingMode::ABS, &CPU::INC, "INC", 6, true),
 		Opcode(Opcode::AddressingMode::ABS, &CPU::ISC, "ISC", 3, true),
-		
+
 		Opcode(Opcode::AddressingMode::REL, &CPU::BEQ, "BEQ", 2, false, true),
 		Opcode(Opcode::AddressingMode::INDY, &CPU::SBC, "SBC", 5, false, true),
 		Opcode(Opcode::AddressingMode::IMPL, &CPU::KIL, "KIL", 3),

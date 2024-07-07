@@ -18,6 +18,8 @@ void PPU::Reset() {
 	x = 0;
 	w = 0;
 	frameReady = false;
+	clock = 0;
+	clockAligner = 0;
 }
 
 uint8_t PPU::ReadRegister(uint8_t index, bool fetch) {
@@ -135,54 +137,60 @@ void PPU::PresentFrame() {
 	frameReady = true;
 }
 
-void PPU::Step() {
-	if (currentScanline < 240) {
-		if ((currentPixel != 0) && ((currentPixel % 8) == 0) && ((currentPixel <= 256) || (currentPixel >= 328))) {
-			incX();
-			if (currentPixel == 256) {
-				incY();
+void PPU::Step(uint32_t cpuClocks) {
+	clockAligner += cpuClocks * cpuClockRatio;
+	while (clockAligner >= 1) {
+		clockAligner -= 1.0;
+		clock++;
+
+		if (currentScanline < 240) {
+			if ((currentPixel != 0) && ((currentPixel % 8) == 0) && ((currentPixel <= 256) || (currentPixel >= 328))) {
+				incX();
+				if (currentPixel == 256) {
+					incY();
+				}
+			}
+			else if (currentPixel == 257) {
+				v = (v & ~(0b000010000011111)) | (t & 0b000010000011111);
+			}
+
+			if (currentPixel < 256) {
+				DrawPixel();
+			}
+			else if (currentPixel == 257) {
+				oamAddress = 0;
+				EvaluateSpriteOverflow();
 			}
 		}
-		else if (currentPixel == 257) {
-			v = (v & ~(0b000010000011111)) | (t & 0b000010000011111);
+		else if (currentScanline == 241 && currentPixel == 1) {
+			StartVB();
 		}
+		else if (currentScanline == 261) {
+			if ((currentPixel != 0) && ((currentPixel % 8) == 0) && ((currentPixel <= 256) || (currentPixel >= 328))) {
+				incX();
+				if (currentPixel == 256) {
+					incY();
+				}
+			}
+			else if (currentPixel == 257) {
+				v = (v & ~(0b000010000011111)) | (t & 0b000010000011111);
+			}
+			else if (currentPixel >= 280 && currentPixel <= 304) {
+				v = (v & ~(0b0111101111100000)) | (t & 0b0111101111100000);
+			}
 
-		if (currentPixel < 256) {
-			DrawPixel();
-		}
-		else if (currentPixel == 257) {
-			oamAddress = 0;
-			EvaluateSpriteOverflow();
-		}
-	}
-	else if (currentScanline == 241 && currentPixel == 1) {
-		StartVB();
-	}
-	else if (currentScanline == 261) {
-		if ((currentPixel != 0) && ((currentPixel % 8) == 0) && ((currentPixel <= 256) || (currentPixel >= 328))) {
-			incX();
-			if (currentPixel == 256) {
-				incY();
+			if (currentPixel == 1) {
+				EndVB();
 			}
 		}
-		else if (currentPixel == 257) {
-			v = (v & ~(0b000010000011111)) | (t & 0b000010000011111);
-		}
-		else if (currentPixel >= 280 && currentPixel <= 304) {
-			v = (v & ~(0b0111101111100000)) | (t & 0b0111101111100000);
-		}
 
-		if (currentPixel == 1) {
-			EndVB();
-		}
-	}
-
-	currentPixel++;
-	if (currentPixel >= scanlineCycles) {
-		currentPixel = 0;
-		currentScanline++;
-		if (currentScanline >= scanlineCount) {
-			currentScanline = 0;
+		currentPixel++;
+		if (currentPixel >= scanlineCycles) {
+			currentPixel = 0;
+			currentScanline++;
+			if (currentScanline >= scanlineCount) {
+				currentScanline = 0;
+			}
 		}
 	}
 }
@@ -246,7 +254,7 @@ void PPU::DrawPixel() {
 
 	screenTexture.SetPixel(currentPixel, currentScanline - 8, pixel);
 
-	if (sprIndex == 0 && sprPixel && bgPixel && (currentPixel != 255)) {
+	if ((currentScanline < 239) && (sprIndex != 0xff) && sprPixel && bgPixel && (currentPixel != 255)) {
 		spr0Hit = true;
 	}
 }

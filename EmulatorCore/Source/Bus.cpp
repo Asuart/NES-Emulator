@@ -10,14 +10,6 @@ void Bus::Reset() {
 	mmc->Reset();
 }
 
-bool Bus::LoadROM(const uint8_t* data, uint32_t size) {
-	romInfo = ROMHeader(size, data);
-	romInfo.Print();
-	bool result = mmc->LoadROM(data + 16);
-	Reset();
-	return result;
-}
-
 uint8_t Bus::Read(uint16_t address, bool fetch) {
 	if (address < 0x2000) {
 		return mmc->ReadRAM(address, fetch);
@@ -26,7 +18,12 @@ uint8_t Bus::Read(uint16_t address, bool fetch) {
 		return ppu->ReadRegister(address % 0x8, fetch);
 	}
 	else if (address < 0x4020) {
-		return io->ReadRegister(address - 0x4000, fetch);
+		if ((address >= 0x4000 && address < 0x4014) || address == 0x4015 || address == 0x4017) {
+			return apu->Read(address, fetch);
+		}
+		else {
+			return io->ReadRegister(address - 0x4000, fetch);
+		}
 	}
 	return mmc->Read(address, fetch);
 }
@@ -41,7 +38,12 @@ void Bus::Write(uint16_t address, uint8_t value) {
 		return;
 	}
 	else if (address < 0x4020) {
-		io->WriteRegister(address - 0x4000, value);
+		if ((address >= 0x4000 && address < 0x4014) || address == 0x4015 || address == 0x4017) {
+			apu->Write(address, value);
+		}
+		else {
+			io->WriteRegister(address - 0x4000, value);
+		}
 		return;
 	}
 	mmc->Write(address, value);

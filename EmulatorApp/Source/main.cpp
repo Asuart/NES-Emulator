@@ -12,6 +12,8 @@ void window_size_callback(GLFWwindow* window, int width, int height) {
 }
 
 int main(int argc, char** argv) {
+	std::cout << std::hex;
+
 	glfwSetWindowSizeCallback(emulatorWindow.mainWindow, window_size_callback);
 	glfwSetDropCallback(emulatorWindow.mainWindow, drop_callback);
 

@@ -28,11 +28,11 @@ uint16_t CPU::GetBreakAddress() {
 	return (uint16_t)bus->Read(0xfffe, true) | ((uint16_t)bus->Read(0xffff, true) << 8);
 }
 
-void CPU::Step() {
+uint32_t CPU::Step() {
 	disasmPC = pc;
 
 	opcode = bus->Read(pc++, true);
-	clock += opcodeTable[opcode].cycles;
+	stepClock = opcodeTable[opcode].cycles;
 	Decode();
 
 	if (disasm) {
@@ -43,6 +43,8 @@ void CPU::Step() {
 	if (opcodeTable[opcode].write) {
 		WriteBack();
 	}
+	clock += opcodeTable[opcode].cycles;
+	return stepClock;
 }
 
 void CPU::Execute() {
@@ -125,7 +127,7 @@ void CPU::Decode() {
 		baseAddress = ((uint16_t)bus->Read(pc, true) | ((uint16_t)bus->Read(pc + 1, true) << 8));
 		address = baseAddress + x;
 		if (opcodeTable[opcode].crossPageCycle && ((address & 0xff00) != (baseAddress & 0xff00))) {
-			clock++;
+			stepClock++;
 		}
 		pc += 2;
 		value = bus->Read(address, opcodeTable[opcode].write);
@@ -134,7 +136,7 @@ void CPU::Decode() {
 		baseAddress = ((uint16_t)bus->Read(pc, true) | ((uint16_t)bus->Read(pc + 1, true) << 8));
 		address = baseAddress + y;
 		if (opcodeTable[opcode].crossPageCycle && ((address & 0xff00) != (baseAddress & 0xff00))) {
-			clock++;
+			stepClock++;
 		}
 		pc += 2;
 		value = bus->Read(address, opcodeTable[opcode].write);
@@ -160,7 +162,7 @@ void CPU::Decode() {
 		baseAddress = ((uint16_t)bus->Read(value, true) | ((uint16_t)bus->Read((value + 1) & 0xff, true) << 8));
 		address = baseAddress + y;
 		if (opcodeTable[opcode].crossPageCycle && ((address & 0xff00) != (baseAddress & 0xff00))) {
-			clock++;
+			stepClock++;
 		}
 		value = bus->Read(address, opcodeTable[opcode].write);
 		break;
@@ -201,21 +203,27 @@ void CPU::ASL() {
 void CPU::BCC() {
 	if (!f_carry) {
 		pc = address;
-		clock++;
+		stepClock++;
+	} else {
+		stepClock = opcodeTable[opcode].cycles;
 	}
 }
 
 void CPU::BCS() {
 	if (f_carry) {
 		pc = address;
-		clock++;
+		stepClock++;
+	} else {
+		stepClock = opcodeTable[opcode].cycles;
 	}
 }
 
 void CPU::BEQ() {
 	if (f_zero) {
 		pc = address;
-		clock++;
+		stepClock++;
+	} else {
+		stepClock = opcodeTable[opcode].cycles;
 	}
 }
 
@@ -228,21 +236,27 @@ void CPU::BIT() {
 void CPU::BMI() {
 	if (f_sign) {
 		pc = address;
-		clock++;
+		stepClock++;
+	} else {
+		stepClock = opcodeTable[opcode].cycles;
 	}
 }
 
 void CPU::BNE() {
 	if (!f_zero) {
 		pc = address;
-		clock++;
+		stepClock++;
+	} else {
+		stepClock = opcodeTable[opcode].cycles;
 	}
 }
 
 void CPU::BPL() {
 	if (!f_sign) {
 		pc = address;
-		clock++;
+		stepClock++;
+	} else {
+		stepClock = opcodeTable[opcode].cycles;
 	}
 }
 
@@ -258,14 +272,18 @@ void CPU::BRK() {
 void CPU::BVC() {
 	if (!f_overflow) {
 		pc = address;
-		clock++;
+		stepClock++;
+	} else {
+		stepClock = opcodeTable[opcode].cycles;
 	}
 }
 
 void CPU::BVS() {
 	if (f_overflow) {
 		pc = address;
-		clock++;
+		stepClock++;
+	} else {
+		stepClock = opcodeTable[opcode].cycles;
 	}
 }
 

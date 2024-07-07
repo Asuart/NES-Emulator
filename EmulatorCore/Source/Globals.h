@@ -23,5 +23,19 @@ enum class MirroringMode {
 
 using Color = glm::i8vec3;
 
-const int32_t prgBatchSize = 16384;
-const int32_t chrBatchSize = 8192;
+const int32_t prgBankSize = 16384;
+const int32_t chrBankSize = 8192;
+
+struct RomHeader;
+struct OAMEntry;
+
+class NesEmulator;
+class Bus;
+class CPU;
+class MMC;
+class PPU;
+class IO;
+class APU;
+class MMC;
+class NMAP;
+class MMC1;

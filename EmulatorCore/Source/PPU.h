@@ -1,7 +1,6 @@
 #pragma once
 #include "Globals.h"
 #include "Texture.h"
-#include "MMC.h"
 #include "CPU.h"
 #include "Bus.h"
 
@@ -19,6 +18,8 @@ private:
 	static const uint32_t scanlineCycles = 341;
 
 	const float cpuClockRatio = 3;
+	uint64_t clock = 0;
+	double clockAligner = 0;
 
 	Texture<Color> screenTexture = Texture<Color>(glm::ivec2(screenWidth, screenHeight));
 	Texture<Color> charPagesTexture = Texture<Color>(glm::ivec2(screenWidth * 2, charPageHeight * 2));
@@ -86,7 +87,7 @@ public:
 	PPU(Bus* interconnect);
 
 	void Reset();
-	void Step();
+	void Step(uint32_t cpuClocks);
 
 	void DrawPixel();
 	void PresentFrame();

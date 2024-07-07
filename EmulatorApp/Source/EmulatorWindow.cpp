@@ -92,6 +92,10 @@ void EmulatorWindow::Start() {
 			screenUploader->Upload();
 			screenUploader->Bind(GL_TEXTURE0);
 			float aspect = ((float)emulator.ppu->screenTexture.resolution.x / emulator.ppu->screenTexture.resolution.y) / ((float)resolution.x / resolution.y);
+			//emulator.ppu->DrawCharPages();
+			//charPagesUploader->Upload();
+			//charPagesUploader->Bind(GL_TEXTURE0);
+			//float aspect = ((float)emulator.ppu->charPagesTexture.resolution.x / emulator.ppu->charPagesTexture.resolution.y) / ((float)resolution.x / resolution.y);
 			glUniform1f(aspectLoc, aspect);
 			glBindVertexArray(screenPlane->vao);
 			glDrawArrays(GL_TRIANGLES, 0, 6);

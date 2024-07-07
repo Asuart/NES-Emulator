@@ -1,15 +1,12 @@
 #pragma once
 #include "Globals.h"
+#include "NMAP.h"
+#include "MMC1.h"
 #include "Bus.h"
-#include "MMC.h"
 #include "CPU.h"
 #include "PPU.h"
 #include "IO.h"
-
-class CPU;
-class MMC;
-class PPU;
-class IO;
+#include "APU.h"
 
 class NesEmulator {
 public:
@@ -18,6 +15,8 @@ public:
 	MMC* mmc = nullptr;
 	PPU* ppu = nullptr;
 	IO* io = nullptr;
+	APU* apu = nullptr;
+
 	bool romLoaded = false;
 
 	NesEmulator();
@@ -27,7 +26,7 @@ public:
 	void Run(int32_t instructionsCount);
 	bool LoadROM(const uint8_t* data, const uint32_t size);
 
-protected:
-	float ppuClockAligner = 0;
+private:
+	MMC* CreateMapper(const uint8_t* data);
 };
 

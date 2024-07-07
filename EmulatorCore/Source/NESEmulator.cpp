@@ -1,13 +1,13 @@
 #include "NESEmulator.h"
-#include <chrono>
-using namespace std::chrono;
 
 NesEmulator::NesEmulator() {
 	bus = new Bus(this);
-	mmc = new MMC(bus);
+	mmc = new NMAP(bus);
 	bus->mmc = mmc;
 	io = new IO(bus);
 	bus->io = io;
+	apu = new APU(bus);
+	bus->apu = apu;
 	ppu = new PPU(bus);
 	bus->ppu = ppu;
 	cpu = new CPU(bus);
@@ -20,6 +20,7 @@ NesEmulator::~NesEmulator() {
 	delete mmc;
 	delete ppu;
 	delete io;
+	delete apu;
 }
 
 void NesEmulator::Reset() {
@@ -29,16 +30,33 @@ void NesEmulator::Reset() {
 void NesEmulator::Run(int32_t instructionsCount) {
 	if (!romLoaded) return;
 	for (int32_t i = 0; i < instructionsCount; i++) {
-		uint64_t startClock = cpu->clock;
-		cpu->Step();
-		ppuClockAligner +=  (cpu->clock - startClock) * ppu->cpuClockRatio;
-		for (; ppuClockAligner >= 1.0; ppuClockAligner--) {
-			ppu->Step();
-		}
+		uint32_t cpuClocks = cpu->Step();
+		ppu->Step(cpuClocks);
+		apu->Step(cpuClocks);
 	}
 }
 
 bool NesEmulator::LoadROM(const uint8_t* data, const uint32_t size) {
-	romLoaded = bus->LoadROM(data, size);
+	bus->romInfo = ROMHeader(size, data);
+	bus->romInfo.Print();
+
+	delete mmc;
+	mmc = CreateMapper(data + 0x10);
+	bus->mmc = mmc;
+
+	Reset();
+
+	romLoaded = true;
 	return romLoaded;
+}
+
+MMC* NesEmulator::CreateMapper(const uint8_t* data) {
+	switch (bus->romInfo.mapper) {
+	case 1:
+		return new MMC1(bus, bus->romInfo, data);
+	case 0:
+		return new NMAP(bus, bus->romInfo, data);
+	default:
+		return new NMAP(bus);
+	}
 }
