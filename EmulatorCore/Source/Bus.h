@@ -12,7 +12,7 @@ class Bus {
 public:
 	ROMHeader romInfo;
 
-	Bus(NesEmulator* emulator);
+	Bus(NesEmulator& emulator, CPU& cpu, PPU& ppu, IO& io, APU& apu, MMC* mmc);
 
 	void Reset();
 
@@ -27,12 +27,12 @@ public:
 	void TriggerNMI();
 
 private:
-	NesEmulator* emulator;
-	CPU* cpu = nullptr;
-	MMC* mmc = nullptr;
-	PPU* ppu = nullptr;
-	IO* io = nullptr;
-	APU* apu = nullptr;
+	NesEmulator& emulator;
+	CPU& cpu;
+	PPU& ppu;
+	IO& io;
+	APU& apu;
+	MMC* mmc;
 
 	friend class NesEmulator;
 };

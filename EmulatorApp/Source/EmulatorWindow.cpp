@@ -17,12 +17,13 @@ EmulatorWindow::EmulatorWindow(uint32_t width, uint32_t height)
 	}
 
 	PixieUI::Init();
+	PixieUI::SetCanvasSize(emulator.ppu.screenWidth, emulator.ppu.screenHeight);
 
 	screenPlane = new ScreenPlane();
 
-	screenUploader = new TextureUploader(emulator.ppu->screenTexture);
-	charPagesUploader = new TextureUploader(emulator.ppu->charPagesTexture);
-	patternTablesUploader = new TextureUploader(emulator.ppu->patternTablesTexture);
+	screenUploader = new TextureUploader(emulator.ppu.screenTexture);
+	charPagesUploader = new TextureUploader(emulator.ppu.charPagesTexture);
+	patternTablesUploader = new TextureUploader(emulator.ppu.patternTablesTexture);
 }
 
 EmulatorWindow::~EmulatorWindow() {
@@ -76,8 +77,8 @@ void EmulatorWindow::Start() {
 
 		emulator.Run(256);
 
-		if (emulator.ppu->frameReady) {
-			emulator.ppu->frameReady = false;
+		if (emulator.ppu.frameReady) {
+			emulator.ppu.frameReady = false;
 			double newTime = glfwGetTime();
 			timeAccumulator += newTime - lastTime;
 			lastTime = newTime;
@@ -94,7 +95,7 @@ void EmulatorWindow::Start() {
 			GLint aspectLoc = glGetUniformLocation(screenPlane->shader, "aspect");
 			screenUploader->Upload();
 			screenUploader->Bind(GL_TEXTURE0);
-			float aspect = ((float)emulator.ppu->screenTexture.width / emulator.ppu->screenTexture.height) / ((float)width / height);
+			float aspect = ((float)emulator.ppu.screenTexture.width / emulator.ppu.screenTexture.height) / ((float)width / height);
 			//emulator.ppu->DrawCharPages();
 			//charPagesUploader->Upload();
 			//charPagesUploader->Bind(GL_TEXTURE0);
@@ -110,12 +111,12 @@ void EmulatorWindow::Start() {
 }
 
 void EmulatorWindow::UpdateKeyStates() {
-	emulator.io->keyStates[0] = glfwGetKey(mainWindow, GLFW_KEY_C) > 0 ? 1 : 0;
-	emulator.io->keyStates[1] = glfwGetKey(mainWindow, GLFW_KEY_V) > 0 ? 1 : 0;
-	emulator.io->keyStates[2] = glfwGetKey(mainWindow, GLFW_KEY_Z) > 0 ? 1 : 0;
-	emulator.io->keyStates[3] = glfwGetKey(mainWindow, GLFW_KEY_X) > 0 ? 1 : 0;
-	emulator.io->keyStates[4] = glfwGetKey(mainWindow, GLFW_KEY_UP) > 0 ? 1 : 0;
-	emulator.io->keyStates[5] = glfwGetKey(mainWindow, GLFW_KEY_DOWN) > 0 ? 1 : 0;
-	emulator.io->keyStates[6] = glfwGetKey(mainWindow, GLFW_KEY_LEFT) > 0 ? 1 : 0;
-	emulator.io->keyStates[7] = glfwGetKey(mainWindow, GLFW_KEY_RIGHT) > 0 ? 1 : 0;
+	emulator.io.keyStates[0] = glfwGetKey(mainWindow, GLFW_KEY_C) > 0 ? 1 : 0;
+	emulator.io.keyStates[1] = glfwGetKey(mainWindow, GLFW_KEY_V) > 0 ? 1 : 0;
+	emulator.io.keyStates[2] = glfwGetKey(mainWindow, GLFW_KEY_Z) > 0 ? 1 : 0;
+	emulator.io.keyStates[3] = glfwGetKey(mainWindow, GLFW_KEY_X) > 0 ? 1 : 0;
+	emulator.io.keyStates[4] = glfwGetKey(mainWindow, GLFW_KEY_UP) > 0 ? 1 : 0;
+	emulator.io.keyStates[5] = glfwGetKey(mainWindow, GLFW_KEY_DOWN) > 0 ? 1 : 0;
+	emulator.io.keyStates[6] = glfwGetKey(mainWindow, GLFW_KEY_LEFT) > 0 ? 1 : 0;
+	emulator.io.keyStates[7] = glfwGetKey(mainWindow, GLFW_KEY_RIGHT) > 0 ? 1 : 0;
 }

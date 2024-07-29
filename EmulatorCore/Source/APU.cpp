@@ -1,9 +1,6 @@
 #include "APU.h"
 
-APU::APU(Bus* bus)
-	: bus(bus) {
-	Reset();
-}
+APU::APU(Bus* bus) : bus(bus) {}
 
 void APU::Reset() {
 	clock = 0;

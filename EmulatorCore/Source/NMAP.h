@@ -8,8 +8,8 @@ class NMAP : public MMC {
 	std::array<uint8_t, 0x4000> vram = std::array<uint8_t, 0x4000>();
 
 public:
-	NMAP(Bus* bus);
-	NMAP(Bus* bus, const ROMHeader& header, const uint8_t* data);
+	NMAP(Bus& bus);
+	NMAP(Bus& bus, const ROMHeader& header, const uint8_t* data);
 
 	void Reset();
 	uint8_t Read(uint16_t address, bool fetch = false);

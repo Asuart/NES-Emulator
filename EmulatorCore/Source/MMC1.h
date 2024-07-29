@@ -23,7 +23,7 @@ class MMC1 : public MMC {
 	std::array<uint8_t, 0x4000> vram = std::array<uint8_t, 0x4000>();
 	std::array<uint8_t, 0x2000> ram;
 public:
-	MMC1(Bus* bus, const ROMHeader& header, const uint8_t* data);
+	MMC1(Bus& bus, const ROMHeader& header, const uint8_t* data);
 
 	void Reset();
 	uint8_t Read(uint16_t address, bool fetch = false);

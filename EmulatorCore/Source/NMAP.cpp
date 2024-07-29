@@ -1,8 +1,8 @@
 #include "NMAP.h"
 
-NMAP::NMAP(Bus* bus) : MMC(bus) {}
+NMAP::NMAP(Bus& bus) : MMC(bus) {}
 
-NMAP::NMAP(Bus* bus, const ROMHeader& header, const uint8_t* data)
+NMAP::NMAP(Bus& bus, const ROMHeader& header, const uint8_t* data)
 	: MMC(bus) {
 	if (header.PRGROMcount == 1) {
 		for (int32_t i = 0; i < prgBankSize; i++)
@@ -16,8 +16,8 @@ NMAP::NMAP(Bus* bus, const ROMHeader& header, const uint8_t* data)
 		std::cout << "Error: NMAP only support up to 2 prg banks.\n";
 	}
 
-	if (bus->romInfo.CHRROMcount < 2) {
-		for (int32_t i = prgBankSize * bus->romInfo.PRGROMcount, j = 0; j < chrBankSize; i++, j++) vram[j] = data[i];
+	if (bus.romInfo.CHRROMcount < 2) {
+		for (int32_t i = prgBankSize * bus.romInfo.PRGROMcount, j = 0; j < chrBankSize; i++, j++) vram[j] = data[i];
 	}
 	else {
 		std::cout << "Error: NMAP only support up to 1 chr bank.\n";

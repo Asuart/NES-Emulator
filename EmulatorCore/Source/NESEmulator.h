@@ -10,23 +10,24 @@
 
 class NesEmulator {
 public:
-	Bus* bus = nullptr;
-	CPU* cpu = nullptr;
-	MMC* mmc = nullptr;
-	PPU* ppu = nullptr;
-	IO* io = nullptr;
-	APU* apu = nullptr;
+	Bus bus;
+	CPU cpu;
+	PPU ppu;
+	IO io;
+	APU apu;
+	MMC* mmc;
 
-	bool romLoaded = false;
+	bool m_romLoaded = false;
+	int32_t m_cycleAligner = 0;
 
 	NesEmulator();
 	~NesEmulator();
 
 	void Reset();
-	void Run(int32_t instructionsCount);
+	void Run(int32_t cycles);
 	bool LoadROM(const uint8_t* data, const uint32_t size);
-
 private:
+
 	MMC* CreateMapper(const uint8_t* data);
 };
 

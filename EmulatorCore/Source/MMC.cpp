@@ -1,11 +1,10 @@
 #include "MMC.h"
 
-MMC::MMC(Bus* interconnect) {
-	bus = interconnect;
-	if (bus->romInfo.fourPage) {
+MMC::MMC(Bus& bus) : bus(bus) {
+	if (bus.romInfo.fourPage) {
 		vramMirroring = MirroringMode::FULL;
 	}
-	else if (bus->romInfo.verticalMirroring) {
+	else if (bus.romInfo.verticalMirroring) {
 		vramMirroring = MirroringMode::VERTICAL;
 	}
 	else {

@@ -1,13 +1,14 @@
 #include "Bus.h"
 
-Bus::Bus(NesEmulator* emulator)
-	: emulator(emulator) {}
+Bus::Bus(NesEmulator& emulator, CPU& cpu, PPU& ppu, IO& io, APU& apu, MMC* mmc)
+	: emulator(emulator), cpu(cpu), ppu(ppu), io(io), apu(apu), mmc(mmc) {}
 
 void Bus::Reset() {
-	cpu->Reset();
-	ppu->Reset();
-	io->Reset();
-	mmc->Reset();
+	if(mmc) mmc->Reset();
+	cpu.Reset();
+	ppu.Reset();
+	io.Reset();
+	apu.Reset();
 }
 
 uint8_t Bus::Read(uint16_t address, bool fetch) {
@@ -15,14 +16,14 @@ uint8_t Bus::Read(uint16_t address, bool fetch) {
 		return mmc->ReadRAM(address, fetch);
 	}
 	else if (address < 0x4000) {
-		return ppu->ReadRegister(address % 0x8, fetch);
+		return ppu.ReadRegister(address % 0x8, fetch);
 	}
 	else if (address < 0x4020) {
 		if ((address >= 0x4000 && address < 0x4014) || address == 0x4015 || address == 0x4017) {
-			return apu->Read(address, fetch);
+			return apu.Read(address, fetch);
 		}
 		else {
-			return io->ReadRegister(address - 0x4000, fetch);
+			return io.ReadRegister(address - 0x4000, fetch);
 		}
 	}
 	return mmc->Read(address, fetch);
@@ -34,15 +35,15 @@ void Bus::Write(uint16_t address, uint8_t value) {
 		return;
 	}
 	else if (address < 0x4000) {
-		ppu->WriteRegister((address - 0x2000) % 0x8, value);
+		ppu.WriteRegister((address - 0x2000) % 0x8, value);
 		return;
 	}
 	else if (address < 0x4020) {
 		if ((address >= 0x4000 && address < 0x4014) || address == 0x4015 || address == 0x4017) {
-			apu->Write(address, value);
+			apu.Write(address, value);
 		}
 		else {
-			io->WriteRegister(address - 0x4000, value);
+			io.WriteRegister(address - 0x4000, value);
 		}
 		return;
 	}
@@ -70,5 +71,5 @@ OAMEntry Bus::GetOAMEntry(uint8_t address) {
 }
 
 void Bus::TriggerNMI() {
-	cpu->NMIException();
+	cpu.NMIException();
 }

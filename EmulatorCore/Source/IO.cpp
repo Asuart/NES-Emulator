@@ -1,9 +1,6 @@
 #include "IO.h"
 
-IO::IO(Bus* bus)
-	: bus(bus) {
-	Reset();
-}
+IO::IO(Bus* bus) : bus(bus) {}
 
 void IO::Reset() {
 	for (int32_t i = 0; i < keyStates.size(); i++) {

@@ -5,14 +5,14 @@
 
 class MMC {
 protected:
-	Bus* bus = nullptr;
+	Bus& bus;
 
 	std::array<uint8_t, 0x800> ram = std::array<uint8_t, 0x800>();
 	std::array<uint8_t, 0x100> oam = std::array<uint8_t, 0x100>();
 	MirroringMode vramMirroring = MirroringMode::FULL;
 
 public:
-	MMC(Bus* bus);
+	MMC(Bus& bus);
 
 	virtual void Reset() = 0;
 	virtual uint8_t Read(uint16_t address, bool fetch = false) = 0;

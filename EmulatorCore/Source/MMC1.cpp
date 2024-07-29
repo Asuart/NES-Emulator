@@ -9,7 +9,7 @@ void MMC1::Reset() {
 	prgBankMode = 3;
 }
 
-MMC1::MMC1(Bus* bus, const ROMHeader& header, const uint8_t* data)
+MMC1::MMC1(Bus& bus, const ROMHeader& header, const uint8_t* data)
 	: MMC(bus) {
 	for (uint32_t i = 0; i < header.PRGROMcount; i++) {
 		prgBanks.push_back(std::array<uint8_t, prgBankSize>());

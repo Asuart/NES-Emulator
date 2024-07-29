@@ -3,10 +3,7 @@
 CPU::Opcode::Opcode(CPU::Opcode::AddressingMode _addressing, void(CPU::* f)(), std::string _name, uint8_t _cycles, bool _write, bool _crossPageCycle)
 	: addressing(_addressing), func(f), name(_name), cycles(_cycles), write(_write), crossPageCycle(_crossPageCycle) {}
 
-CPU::CPU(Bus* interconnect)
-	: bus(interconnect) {
-	Reset();
-}
+CPU::CPU(Bus* bus) : bus(bus) {}
 
 void CPU::Reset() {
 	f = 0x24;

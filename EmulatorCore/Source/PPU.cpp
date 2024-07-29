@@ -1,9 +1,6 @@
 #include "PPU.h"
 
-PPU::PPU(Bus* interconnect)
-	: bus(interconnect) {
-	Reset();
-}
+PPU::PPU(Bus* bus) : bus(bus) {}
 
 void PPU::Reset() {
 	ctrl = mask = status = scroll = address = data = dataReadBuffer = 0;
@@ -14,6 +11,7 @@ void PPU::Reset() {
 	vramAddress = tempVramAddress = 0x2000;
 	currentTile = nextTile = 0;
 	currentTileParams = nextTileParams = 0;
+	v = t = 0;
 	v = t = 0;
 	x = 0;
 	w = 0;

@@ -1,7 +1,7 @@
 #pragma once
+#include <string>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <string>
 #include <PixieUI/PixieUI.h>
 #include "NESEmulator.h"
 #include "ScreenPlane.h"
@@ -19,13 +19,13 @@ public:
 	void SetResolution(uint32_t width, uint32_t height);
 
 private:
+	NesEmulator emulator;
 	ScreenPlane* screenPlane = nullptr;
 	TextureUploader<Color>* screenUploader = nullptr;
 	TextureUploader<Color>* charPagesUploader = nullptr;
 	TextureUploader<Color>* patternTablesUploader = nullptr;
 	uint32_t width;
 	uint32_t height;
-	NesEmulator emulator;
 
 	void UpdateKeyStates();
 };
