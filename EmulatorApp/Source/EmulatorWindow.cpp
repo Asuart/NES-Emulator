@@ -1,13 +1,13 @@
 #include "EmulatorWindow.h"
 
-EmulatorWindow::EmulatorWindow(glm::ivec2 _resolution)
-	: resolution(_resolution) {
+EmulatorWindow::EmulatorWindow(uint32_t width, uint32_t height)
+	: width(width), height(height) {
 	if (glfwInit() != GL_TRUE) {
 		std::cout << "GLFW failed to initialize\n";
 		exit(1);
 	}
 
-	mainWindow = glfwCreateWindow(resolution.x, resolution.y, "NES Emulator", NULL, NULL);
+	mainWindow = glfwCreateWindow(width, height, "NES Emulator", NULL, NULL);
 	glfwMakeContextCurrent(mainWindow);
 	glfwSetInputMode(mainWindow, GLFW_STICKY_KEYS, GL_TRUE);
 
@@ -34,8 +34,9 @@ EmulatorWindow::~EmulatorWindow() {
 	delete patternTablesUploader;
 }
 
-void EmulatorWindow::SetResolution(glm::ivec2 _resolution) {
-	resolution = _resolution;
+void EmulatorWindow::SetResolution(uint32_t _width, uint32_t _height) {
+	width = _width;
+	height = _height;
 }
 
 bool EmulatorWindow::LoadROM(const std::string& romPath) {
@@ -93,7 +94,7 @@ void EmulatorWindow::Start() {
 			GLint aspectLoc = glGetUniformLocation(screenPlane->shader, "aspect");
 			screenUploader->Upload();
 			screenUploader->Bind(GL_TEXTURE0);
-			float aspect = ((float)emulator.ppu->screenTexture.resolution.x / emulator.ppu->screenTexture.resolution.y) / ((float)resolution.x / resolution.y);
+			float aspect = ((float)emulator.ppu->screenTexture.width / emulator.ppu->screenTexture.height) / ((float)width / height);
 			//emulator.ppu->DrawCharPages();
 			//charPagesUploader->Upload();
 			//charPagesUploader->Bind(GL_TEXTURE0);

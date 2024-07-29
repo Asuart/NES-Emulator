@@ -1,6 +1,7 @@
 #pragma once
 #include <glad/glad.h>
 #include "Texture.h"
+#include "Color.h"
 
 template <typename T>
 class TextureUploader {

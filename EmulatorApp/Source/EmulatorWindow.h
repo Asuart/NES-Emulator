@@ -1,7 +1,6 @@
 #pragma once
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
 #include <string>
 #include <PixieUI/PixieUI.h>
 #include "NESEmulator.h"
@@ -12,19 +11,20 @@ class EmulatorWindow {
 public:
 	GLFWwindow* mainWindow = nullptr;
 
-	EmulatorWindow(glm::ivec2 resolution);
+	EmulatorWindow(uint32_t width, uint32_t height);
 	~EmulatorWindow();
 
 	bool LoadROM(const std::string& romPath);
 	void Start();
-	void SetResolution(glm::ivec2 resolution);
+	void SetResolution(uint32_t width, uint32_t height);
 
 private:
 	ScreenPlane* screenPlane = nullptr;
 	TextureUploader<Color>* screenUploader = nullptr;
 	TextureUploader<Color>* charPagesUploader = nullptr;
 	TextureUploader<Color>* patternTablesUploader = nullptr;
-	glm::ivec2 resolution = glm::ivec2(0, 0);
+	uint32_t width;
+	uint32_t height;
 	NesEmulator emulator;
 
 	void UpdateKeyStates();

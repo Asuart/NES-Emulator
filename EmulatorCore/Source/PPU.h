@@ -1,5 +1,6 @@
 #pragma once
 #include "Globals.h"
+#include "Color.h"
 #include "Texture.h"
 #include "CPU.h"
 #include "Bus.h"
@@ -21,9 +22,9 @@ private:
 	uint64_t clock = 0;
 	double clockAligner = 0;
 
-	Texture<Color> screenTexture = Texture<Color>(glm::ivec2(screenWidth, screenHeight));
-	Texture<Color> charPagesTexture = Texture<Color>(glm::ivec2(screenWidth * 2, charPageHeight * 2));
-	Texture<Color> patternTablesTexture = Texture<Color>(glm::ivec2(patterTableSize * 2, patterTableSize));
+	Texture<Color> screenTexture = Texture<Color>(screenWidth, screenHeight);
+	Texture<Color> charPagesTexture = Texture<Color>(screenWidth * 2, charPageHeight * 2);
+	Texture<Color> patternTablesTexture = Texture<Color>(patterTableSize * 2, patterTableSize);
 	const DisplayMode displayMode = DisplayMode::NTSC;
 
 	Bus* bus;
@@ -120,7 +121,7 @@ private:
 	void DrawPatternTables();
 	void DrawSprites();
 
-	std::array<glm::vec3, 0x40> palette = {
+	std::array<Color, 0x40> palette = {
 		// 0x0X
 		Color(117, 117, 117),
 		Color(39, 27, 143),

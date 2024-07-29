@@ -1,13 +1,13 @@
 #include "EmulatorWindow.h"
 
-EmulatorWindow emulatorWindow(glm::ivec2(1024, 896));
+EmulatorWindow emulatorWindow(1024, 896);
 
 void drop_callback(GLFWwindow* window, int count, const char** paths) {
 	emulatorWindow.LoadROM(paths[0]);
 }
 
 void window_size_callback(GLFWwindow* window, int width, int height) {
-	emulatorWindow.SetResolution(glm::ivec2(width, height));
+	emulatorWindow.SetResolution(width, height);
 	glViewport(0, 0, width, height);
 }
 
