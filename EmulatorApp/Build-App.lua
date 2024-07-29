@@ -2,7 +2,7 @@ project "EmulatorApp"
    kind "ConsoleApp"
    language "C++"
    cppdialect "C++20"
-   targetdir "Binaries/%{cfg.buildcfg}"
+   targetdir "build/%{cfg.buildcfg}"
    staticruntime "off"
 
    files { "Source/**.h", "Source/**.cpp" }
@@ -10,21 +10,26 @@ project "EmulatorApp"
    includedirs
    {
       "Source",
+      "../dependencies/PixieUI/include",
+      "../dependencies/PixieUI/dependencies/GLAD/include",
+      "../dependencies/PixieUI/dependencies/GLFW/include",
+	  "../EmulatorCore/Source",
+   }
 
-	  -- Include Core
-	  "../EmulatorCore/Source"
+   libdirs
+   {
+      "../dependencies/PixieUI/dependencies/GLFW/lib-vc2022-64",
    }
 
    links
    {
+      "PixieUI",
       "EmulatorCore",
-	  "opengl32.lib",
-	  "glew32.lib",
 	  "glfw3.lib"
    }
 
-   targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")
-   objdir ("../Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
+   targetdir ("../build/" .. OutputDir .. "/%{prj.name}")
+   objdir ("../build/Intermediates/" .. OutputDir .. "/%{prj.name}")
 
    filter "system:windows"
        systemversion "latest"

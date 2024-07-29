@@ -1,8 +1,9 @@
 #pragma once
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <string>
+#include <PixieUI/PixieUI.h>
 #include "NESEmulator.h"
 #include "ScreenPlane.h"
 #include "TextureUploader.h"

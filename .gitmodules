@@ -1,0 +1,3 @@
+[submodule "dependencies/PixieUI"]
+	path = dependencies/PixieUI
+	url = https://github.com/Asuart/PixieUI.git

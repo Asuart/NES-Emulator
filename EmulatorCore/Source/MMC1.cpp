@@ -24,7 +24,7 @@ MMC1::MMC1(Bus* bus, const ROMHeader& header, const uint8_t* data)
 		}
 	}
 	if (chrBanks.size() < 2) {
-		for (int32_t i = chrBanks.size(); i < 2; i++) {
+		for (size_t i = chrBanks.size(); i < 2; i++) {
 			chrBanks.push_back(std::array<uint8_t, chrBankSize>());
 			for (uint32_t j = 0; j < chrBankSize; j++) {
 				chrBanks[i][j] = 0;

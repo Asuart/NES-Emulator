@@ -10,6 +10,8 @@ workspace "NES Emulator"
 
 OutputDir = "%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}"
 
+include "dependencies/PixieUI/Build-PixieUI.lua"
+
 include "EmulatorCore/Build-Core.lua"
 
 include "EmulatorApp/Build-App.lua"

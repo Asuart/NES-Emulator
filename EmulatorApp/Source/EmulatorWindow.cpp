@@ -11,10 +11,12 @@ EmulatorWindow::EmulatorWindow(glm::ivec2 _resolution)
 	glfwMakeContextCurrent(mainWindow);
 	glfwSetInputMode(mainWindow, GLFW_STICKY_KEYS, GL_TRUE);
 
-	if (glewInit() != GLEW_OK) {
-		std::cout << "GLEW failed to initialize\n";
+	if (!gladLoadGL()) {
+		std::cout << "GLAD failed to initialize\n";
 		exit(2);
 	}
+
+	PixieUI::Init();
 
 	screenPlane = new ScreenPlane();
 

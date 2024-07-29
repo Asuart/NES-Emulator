@@ -1,6 +1,6 @@
 # Directories
 .vs/
-Binaries/
+build/
 
 # Files
 *.vcxproj
@@ -11,4 +11,4 @@ Binaries/
 Makefile
 
 # Exclude
-!Vendor/Binaries
+!dependencies/binaries
