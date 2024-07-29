@@ -1,6 +1,6 @@
 #include "EmulatorWindow.h"
 
-EmulatorWindow emulatorWindow(1024, 896);
+EmulatorWindow emulatorWindow(512, 448);
 
 void drop_callback(GLFWwindow* window, int count, const char** paths) {
 	emulatorWindow.LoadROM(paths[0]);
@@ -14,8 +14,8 @@ void window_size_callback(GLFWwindow* window, int width, int height) {
 int main(int argc, char** argv) {
 	std::cout << std::hex;
 
-	glfwSetWindowSizeCallback(emulatorWindow.mainWindow, window_size_callback);
-	glfwSetDropCallback(emulatorWindow.mainWindow, drop_callback);
+	glfwSetWindowSizeCallback(emulatorWindow.m_mainWindow, window_size_callback);
+	glfwSetDropCallback(emulatorWindow.m_mainWindow, drop_callback);
 
 	if (argc > 2) {
 		std::cout << "Programm uses first argument as a path to a ROM file. All other are ignored.\n";

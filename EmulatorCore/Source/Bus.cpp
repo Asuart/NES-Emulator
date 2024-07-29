@@ -4,7 +4,7 @@ Bus::Bus(NesEmulator& emulator, CPU& cpu, PPU& ppu, IO& io, APU& apu, MMC* mmc)
 	: emulator(emulator), cpu(cpu), ppu(ppu), io(io), apu(apu), mmc(mmc) {}
 
 void Bus::Reset() {
-	if(mmc) mmc->Reset();
+	mmc->Reset();
 	cpu.Reset();
 	ppu.Reset();
 	io.Reset();

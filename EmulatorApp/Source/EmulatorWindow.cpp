@@ -1,15 +1,15 @@
 #include "EmulatorWindow.h"
 
 EmulatorWindow::EmulatorWindow(uint32_t width, uint32_t height)
-	: width(width), height(height) {
+	: m_width(width), m_height(height), m_layout(width, height) {
 	if (glfwInit() != GL_TRUE) {
 		std::cout << "GLFW failed to initialize\n";
 		exit(1);
 	}
 
-	mainWindow = glfwCreateWindow(width, height, "NES Emulator", NULL, NULL);
-	glfwMakeContextCurrent(mainWindow);
-	glfwSetInputMode(mainWindow, GLFW_STICKY_KEYS, GL_TRUE);
+	m_mainWindow = glfwCreateWindow(width, height, "NES Emulator", NULL, NULL);
+	glfwMakeContextCurrent(m_mainWindow);
+	glfwSetInputMode(m_mainWindow, GLFW_STICKY_KEYS, GL_TRUE);
 
 	if (!gladLoadGL()) {
 		std::cout << "GLAD failed to initialize\n";
@@ -17,27 +17,20 @@ EmulatorWindow::EmulatorWindow(uint32_t width, uint32_t height)
 	}
 
 	PixieUI::Init();
-	PixieUI::SetCanvasSize(emulator.ppu.screenWidth, emulator.ppu.screenHeight);
+	PixieUI::SetCanvasSize(m_emulator.ppu.screenWidth, m_emulator.ppu.screenHeight);
 
-	screenPlane = new ScreenPlane();
-
-	screenUploader = new TextureUploader(emulator.ppu.screenTexture);
-	charPagesUploader = new TextureUploader(emulator.ppu.charPagesTexture);
-	patternTablesUploader = new TextureUploader(emulator.ppu.patternTablesTexture);
+	m_viewportTexture = new PixieUI::Texture(0, 0, m_emulator.ppu.screenWidth, m_emulator.ppu.screenHeight);
+	m_layout.AttachElement(m_viewportTexture);
 }
 
 EmulatorWindow::~EmulatorWindow() {
-	glfwDestroyWindow(mainWindow);
+	glfwDestroyWindow(m_mainWindow);
 	glfwTerminate();
-	delete screenPlane;
-	delete screenUploader;
-	delete charPagesUploader;
-	delete patternTablesUploader;
 }
 
-void EmulatorWindow::SetResolution(uint32_t _width, uint32_t _height) {
-	width = _width;
-	height = _height;
+void EmulatorWindow::SetResolution(uint32_t width, uint32_t height) {
+	m_width = width;
+	m_height = height;
 }
 
 bool EmulatorWindow::LoadROM(const std::string& romPath) {
@@ -59,7 +52,7 @@ bool EmulatorWindow::LoadROM(const std::string& romPath) {
 		return false;
 	}
 
-	bool loaded = emulator.LoadROM(ROMdata, romSize);
+	bool loaded = m_emulator.LoadROM(ROMdata, romSize);
 
 	delete[] ROMdata;
 
@@ -67,56 +60,49 @@ bool EmulatorWindow::LoadROM(const std::string& romPath) {
 }
 
 void EmulatorWindow::Start() {
-	const double targetFPS = 60;
-	const double frameTime = 1.0 / targetFPS;
 	double lastTime = glfwGetTime();
 	double timeAccumulator = 0;
-	while (!glfwWindowShouldClose(mainWindow)) {
+	while (!glfwWindowShouldClose(m_mainWindow)) {
 		glfwPollEvents();
 		UpdateKeyStates();
 
-		emulator.Run(256);
+		m_emulator.Run(256);
 
-		if (emulator.ppu.frameReady) {
-			emulator.ppu.frameReady = false;
+		if (m_emulator.ppu.frameReady) {
+			m_emulator.ppu.frameReady = false;
+			m_viewportTexture->UploadTexture(
+				m_emulator.ppu.screenWidth, m_emulator.ppu.screenHeight,
+				m_emulator.ppu.screenTexture.pixels.data(),
+				GL_RGB, GL_UNSIGNED_BYTE
+			);
+
 			double newTime = glfwGetTime();
 			timeAccumulator += newTime - lastTime;
 			lastTime = newTime;
-
-			if (timeAccumulator < frameTime) {
-				glfwWaitEventsTimeout(frameTime - timeAccumulator);
+			if (timeAccumulator < m_targetFrameTime) {
+				glfwWaitEventsTimeout(m_targetFrameTime - timeAccumulator);
 			}
+			std::string newTitle = "NES Emulator: " + std::to_string(timeAccumulator * 1000) + "ms";
+			glfwSetWindowTitle(m_mainWindow, newTitle.c_str());
 			timeAccumulator = 0;
 
 			glClear(GL_COLOR_BUFFER_BIT);
 
-			glUseProgram(screenPlane->shader);
+			m_layout.Draw();
 
-			GLint aspectLoc = glGetUniformLocation(screenPlane->shader, "aspect");
-			screenUploader->Upload();
-			screenUploader->Bind(GL_TEXTURE0);
-			float aspect = ((float)emulator.ppu.screenTexture.width / emulator.ppu.screenTexture.height) / ((float)width / height);
-			//emulator.ppu->DrawCharPages();
-			//charPagesUploader->Upload();
-			//charPagesUploader->Bind(GL_TEXTURE0);
-			//float aspect = ((float)emulator.ppu->charPagesTexture.resolution.x / emulator.ppu->charPagesTexture.resolution.y) / ((float)resolution.x / resolution.y);
-			glUniform1f(aspectLoc, aspect);
-			glBindVertexArray(screenPlane->vao);
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-			glBindVertexArray(0);
+			glfwSwapBuffers(m_mainWindow);
 
-			glfwSwapBuffers(mainWindow);
 		}
 	}
 }
 
 void EmulatorWindow::UpdateKeyStates() {
-	emulator.io.keyStates[0] = glfwGetKey(mainWindow, GLFW_KEY_C) > 0 ? 1 : 0;
-	emulator.io.keyStates[1] = glfwGetKey(mainWindow, GLFW_KEY_V) > 0 ? 1 : 0;
-	emulator.io.keyStates[2] = glfwGetKey(mainWindow, GLFW_KEY_Z) > 0 ? 1 : 0;
-	emulator.io.keyStates[3] = glfwGetKey(mainWindow, GLFW_KEY_X) > 0 ? 1 : 0;
-	emulator.io.keyStates[4] = glfwGetKey(mainWindow, GLFW_KEY_UP) > 0 ? 1 : 0;
-	emulator.io.keyStates[5] = glfwGetKey(mainWindow, GLFW_KEY_DOWN) > 0 ? 1 : 0;
-	emulator.io.keyStates[6] = glfwGetKey(mainWindow, GLFW_KEY_LEFT) > 0 ? 1 : 0;
-	emulator.io.keyStates[7] = glfwGetKey(mainWindow, GLFW_KEY_RIGHT) > 0 ? 1 : 0;
+	m_emulator.io.keyStates[0] = glfwGetKey(m_mainWindow, GLFW_KEY_C) > 0 ? 1 : 0;
+	m_emulator.io.keyStates[1] = glfwGetKey(m_mainWindow, GLFW_KEY_V) > 0 ? 1 : 0;
+	m_emulator.io.keyStates[2] = glfwGetKey(m_mainWindow, GLFW_KEY_Z) > 0 ? 1 : 0;
+	m_emulator.io.keyStates[3] = glfwGetKey(m_mainWindow, GLFW_KEY_X) > 0 ? 1 : 0;
+	m_emulator.io.keyStates[4] = glfwGetKey(m_mainWindow, GLFW_KEY_UP) > 0 ? 1 : 0;
+	m_emulator.io.keyStates[5] = glfwGetKey(m_mainWindow, GLFW_KEY_DOWN) > 0 ? 1 : 0;
+	m_emulator.io.keyStates[6] = glfwGetKey(m_mainWindow, GLFW_KEY_LEFT) > 0 ? 1 : 0;
+	m_emulator.io.keyStates[7] = glfwGetKey(m_mainWindow, GLFW_KEY_RIGHT) > 0 ? 1 : 0;
 }
