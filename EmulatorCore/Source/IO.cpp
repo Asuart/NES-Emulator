@@ -1,6 +1,6 @@
 #include "IO.h"
 
-IO::IO(Bus* bus) : bus(bus) {}
+IO::IO(Bus& bus) : bus(bus) {}
 
 void IO::Reset() {
 	for (int32_t i = 0; i < keyStates.size(); i++) {
@@ -25,7 +25,7 @@ void IO::WriteRegister(uint8_t address, uint8_t value) {
 	if (address == 0x14) {
 		uint16_t romAddress = ((uint16_t)value << 8) & 0xff00;
 		for (int32_t oamAddress = 0; oamAddress < 0x100; oamAddress++, romAddress++) {
-			bus->WriteOAM(oamAddress, bus->Read(romAddress, true));
+			bus.WriteOAM(oamAddress, bus.Read(romAddress, true));
 		}
 	}
 	else if (address == 0x16) {

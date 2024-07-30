@@ -66,8 +66,12 @@ void Bus::WriteOAM(uint8_t address, uint8_t value) {
 	mmc->WriteOAM(address, value);
 }
 
-OAMEntry Bus::GetOAMEntry(uint8_t address) {
+const OAMEntry& Bus::GetOAMEntry(uint8_t address) {
 	return mmc->GetOAMEntry(address);
+}
+
+OAMEntry* Bus::GetOAMBuffer() {
+	return mmc->GetOAMBuffer();
 }
 
 void Bus::TriggerNMI() {

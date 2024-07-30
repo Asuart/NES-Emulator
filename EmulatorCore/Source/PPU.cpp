@@ -1,6 +1,6 @@
 #include "PPU.h"
 
-PPU::PPU(Bus* bus) : bus(bus) {}
+PPU::PPU(Bus& bus) : bus(bus) {}
 
 void PPU::Reset() {
 	ctrl = mask = status = scroll = address = data = dataReadBuffer = 0;
@@ -39,7 +39,7 @@ uint8_t PPU::ReadRegister(uint8_t index, bool fetch) {
 	case 4:
 		returnValue = oamData;
 		if (!fetch) {
-			oamData = bus->ReadOAM(oamAddress);
+			oamData = bus.ReadOAM(oamAddress);
 			if (!verticalBlank) {
 				oamAddress++;
 			}
@@ -52,7 +52,7 @@ uint8_t PPU::ReadRegister(uint8_t index, bool fetch) {
 	case 7:
 		returnValue = dataReadBuffer;
 		if (!fetch) {
-			dataReadBuffer = bus->ReadVRAM(vramAddress);
+			dataReadBuffer = bus.ReadVRAM(vramAddress);
 			if (vramAddress >= 0x3f00) {
 				returnValue = dataReadBuffer;
 			}
@@ -87,7 +87,7 @@ void PPU::WriteRegister(uint8_t index, uint8_t value) {
 		break;
 	case 4:
 		oamData = value;
-		bus->WriteOAM(oamAddress, oamData);
+		bus.WriteOAM(oamAddress, oamData);
 		oamAddress++;
 		break;
 	case 5:
@@ -124,7 +124,7 @@ void PPU::WriteRegister(uint8_t index, uint8_t value) {
 		break;
 	case 7:
 		data = value;
-		bus->WriteVRAM(vramAddress, data);
+		bus.WriteVRAM(vramAddress, data);
 		if (increment) vramAddress += 32;
 		else vramAddress++;
 		break;
@@ -157,7 +157,7 @@ void PPU::Step(uint32_t cpuClocks) {
 			}
 			else if (currentPixel == 257) {
 				oamAddress = 0;
-				EvaluateSpriteOverflow();
+				EvaluateSprites();
 			}
 		}
 		else if (currentScanline == 241 && currentPixel == 1) {
@@ -212,20 +212,16 @@ void PPU::DrawPixel() {
 	}
 
 	uint8_t sprPixel = 0, sprColorSet = 0, sprPriority = 0, sprIndex = 0xff;
-	if (sprEnabled && !(!sprShowLeft && currentPixel < 8)) {
-		for (int32_t i = 0x100 - 0x4; i >= 0; i -= 4) {
-			OAMEntry spr = bus->GetOAMEntry(i);
-			if (!(currentPixel >= spr.x && currentPixel < spr.x + 8) || !(currentScanline > spr.y)) continue;
+	if (sprEnabled && sprShowLeft && currentPixel >= 8) {
+		for (uint32_t i = 0; i < scanlineSprites.size(); i++) {
+			const OAMEntry& spr = scanlineSprites[i];
+			if (currentPixel < spr.x || currentPixel >= spr.x + 8) continue;
 			uint8_t sprCol = currentPixel - spr.x;
 			uint8_t sprRow = currentScanline - spr.y - 1;
 
+			uint8_t sprFetchedPixel = 0;
 			if (!sprSize && currentScanline <= spr.y + 8) {
-				uint8_t sprFetchedPixel = GetPixel(sprPattern, spr.tile, sprCol, sprRow, spr.flipX, spr.flipY);
-				if (!sprFetchedPixel) continue;
-				sprPixel = sprFetchedPixel;
-				sprColorSet = spr.palette;
-				sprPriority = spr.priority;
-				sprIndex = i;
+				sprFetchedPixel = GetPixel(sprPattern, spr.tile, sprCol, sprRow, spr.flipX, spr.flipY);
 			}
 			else if (sprSize && currentScanline <= spr.y + 16) {
 				uint8_t tileIndex = spr.bigIndex << 1;
@@ -233,13 +229,15 @@ void PPU::DrawPixel() {
 					sprRow -= 8;
 					tileIndex += 1;
 				}
-				uint8_t sprFetchedPixel = GetPixel(spr.bank, tileIndex, sprCol, sprRow, spr.flipX, spr.flipY);
-				if (!sprFetchedPixel) continue;
-				sprPixel = sprFetchedPixel;
-				sprColorSet = spr.palette;
-				sprPriority = spr.priority;
-				sprIndex = i;
+				sprFetchedPixel = GetPixel(spr.bank, tileIndex, sprCol, sprRow, spr.flipX, spr.flipY);
 			}
+
+			if (!sprFetchedPixel) continue;
+			sprPixel = sprFetchedPixel;
+			sprColorSet = spr.palette;
+			sprPriority = spr.priority;
+			sprIndex = i;
+			break;
 		}
 	}
 
@@ -252,7 +250,7 @@ void PPU::DrawPixel() {
 
 	screenTexture.SetPixel(currentPixel, currentScanline - 8, pixel);
 
-	if ((currentScanline < 239) && (sprIndex != 0xff) && sprPixel && bgPixel && (currentPixel != 255)) {
+	if (spr0Evaluated && sprIndex == 0x00 && currentScanline < 239 && sprPixel && bgPixel && currentPixel != 255 && !(bgShowLeft && sprShowLeft && x < 8)) {
 		spr0Hit = true;
 	}
 }
@@ -273,7 +271,7 @@ void PPU::EndVB() {
 void PPU::NMI() {
 	if (!nmiTriggered && nmiEnabled && verticalBlank) {
 		nmiTriggered = true;
-		bus->TriggerNMI();
+		bus.TriggerNMI();
 	}
 }
 
@@ -288,11 +286,11 @@ Color PPU::GetBGColor(uint8_t index) {
 }
 
 uint8_t PPU::ReadSPRPalette(uint8_t offset) {
-	return bus->ReadVRAM(0x3f10 + offset);
+	return bus.ReadVRAM(0x3f10 + offset);
 }
 
 uint8_t PPU::ReadBGPalette(uint8_t offset) {
-	return bus->ReadVRAM(0x3f00 + offset);
+	return bus.ReadVRAM(0x3f00 + offset);
 }
 
 Color PPU::GetUniversalBGColor() {
@@ -300,19 +298,20 @@ Color PPU::GetUniversalBGColor() {
 	return GetColorFromPalette(colorIndex);
 }
 
-void PPU::EvaluateSpriteOverflow() {
-	uint8_t spritesOnLine = 0;
-	for (int32_t i = 0; i < 0x100; i += 4) {
-		OAMEntry spr = bus->GetOAMEntry(i);
-		if (!sprSize && currentScanline > spr.y && currentScanline <= spr.y + 8) {
-			spritesOnLine++;
+void PPU::EvaluateSprites() {
+	scanlineSprites.clear();
+	OAMEntry* oamBuffer = bus.GetOAMBuffer();
+	for (int32_t i = 0; i < 64; i++) {
+		if (oamBuffer[i].y > currentScanline) continue;
+		if ((!sprSize && currentScanline < oamBuffer[i].y + 8) ||
+			(sprSize && currentScanline < oamBuffer[i].y + 16)) {
+			if (i == 0) spr0Evaluated;
+			if (scanlineSprites.size() >= spritesPerScanline) {
+				sprOverflow = true;
+				if(limitScanlineSprites) break;
+			}
+			scanlineSprites.push_back(oamBuffer[i]);
 		}
-		else if (sprSize && currentScanline > spr.y && currentScanline <= spr.y + 16) {
-			spritesOnLine++;
-		}
-	}
-	if (spritesOnLine > 8) {
-		sprOverflow = true;
 	}
 }
 
@@ -350,12 +349,12 @@ void PPU::incY() {
 
 uint8_t PPU::GetTile(uint8_t nametable, uint16_t tileIndex) const {
 	uint16_t baseAddress = 0x2000 + 0x400 * (nametable & 0b11);
-	return bus->ReadVRAM(baseAddress + tileIndex);
+	return bus.ReadVRAM(baseAddress + tileIndex);
 }
 
 uint8_t PPU::GetColorSet(uint8_t nametable, uint8_t tileX, uint8_t tileY) const {
 	uint16_t baseAddress = 0x23c0 + 0x400 * (nametable & 0b11);
-	uint8_t colorSet = bus->ReadVRAM(baseAddress + ((tileY / 4) * 8 + tileX / 4));
+	uint8_t colorSet = bus.ReadVRAM(baseAddress + ((tileY / 4) * 8 + tileX / 4));
 	colorSet = (colorSet >> ((((tileX % 4) / 2) | (((tileY % 4) / 2) << 1)) * 2)) & 0b11;
 	return colorSet;
 }
@@ -364,8 +363,8 @@ uint8_t PPU::GetPixel(uint8_t patternTable, uint8_t tile, uint8_t col, uint8_t r
 	uint16_t baseAddress = 0x1000 * (patternTable & 0b1);
 	uint16_t ind = (tile * 16) + (vMirror ? 7 - row : row);
 	if (!hMirror) col = 7 - col;
-	uint8_t b1 = (bus->ReadVRAM(baseAddress + ind) >> col) & 1;
-	uint8_t b2 = (bus->ReadVRAM(baseAddress + ind + 8) >> col) & 1;
+	uint8_t b1 = (bus.ReadVRAM(baseAddress + ind) >> col) & 1;
+	uint8_t b2 = (bus.ReadVRAM(baseAddress + ind + 8) >> col) & 1;
 	return (b2 << 1) | b1;
 }
 
@@ -376,12 +375,12 @@ Color PPU::GetColorFromPalette(uint8_t index) {
 void PPU::FetchTile() {
 	currentTile = nextTile;
 	uint16_t tileAddress = 0x2000 | (v & 0xfff);
-	uint16_t tile = bus->ReadVRAM(tileAddress);
+	uint16_t tile = bus.ReadVRAM(tileAddress);
 	uint16_t baseAddress = 0x1000 * bgPattern;
 	uint16_t offset = (tile * 16) + ((v >> 12) & 0b111);
 	uint16_t address = baseAddress + offset;
-	uint8_t b1 = bus->ReadVRAM(address);
-	uint8_t b2 = bus->ReadVRAM(address + 8);
+	uint8_t b1 = bus.ReadVRAM(address);
+	uint8_t b2 = bus.ReadVRAM(address + 8);
 	nextTile = (b2 << 8) | b1;
 
 	uint8_t tileX = v & 0b11;
@@ -390,7 +389,7 @@ void PPU::FetchTile() {
 
 	currentTileParams = nextTileParams;
 	uint16_t attributeAddress = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
-	uint8_t colorSet = bus->ReadVRAM(attributeAddress);
+	uint8_t colorSet = bus.ReadVRAM(attributeAddress);
 	colorSet = (colorSet >> attrOffset) & 0b11;
 	nextTileParams = colorSet;
 }
@@ -433,7 +432,7 @@ void PPU::DrawPatternTables() {
 
 void PPU::DrawSprites() {
 	for (int32_t i = 0; i < 0x100; i += 4) {
-		OAMEntry spr = bus->GetOAMEntry(i);
+		OAMEntry spr = bus.GetOAMEntry(i);
 		for (int32_t row = 0; row < 8; row++) {
 			for (int32_t col = 0; col < 8; col++) {
 				uint8_t pixel = GetPixel(sprPattern, spr.tile, col, row, spr.flipX, spr.flipY);

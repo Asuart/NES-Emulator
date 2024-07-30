@@ -4,6 +4,9 @@
 #include <GLFW/glfw3.h>
 #include <PixieUI/PixieUI.h>
 #include "NESEmulator.h"
+#include <concrt.h>
+#include <chrono>
+#include <thread>
 
 class EmulatorWindow {
 public:
@@ -22,7 +25,7 @@ private:
 	uint32_t m_height;
 	PixieUI::Layout m_layout;
 	PixieUI::Texture* m_viewportTexture;
-	double m_targetFPS = 60.0;
+	double m_targetFPS = 1000.0;
 	double m_targetFrameTime = 1.0 / m_targetFPS;
 
 	void UpdateKeyStates();

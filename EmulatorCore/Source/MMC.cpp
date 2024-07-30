@@ -28,6 +28,10 @@ void MMC::WriteOAM(uint8_t address, uint8_t value) {
 	oam[address] = value;
 }
 
-OAMEntry MMC::GetOAMEntry(uint8_t address) {
+const OAMEntry& MMC::GetOAMEntry(uint8_t address) {
 	return *((OAMEntry*)(&oam[address - address % 4]));
+}
+
+OAMEntry* MMC::GetOAMBuffer() {
+	return (OAMEntry*)oam.data();
 }

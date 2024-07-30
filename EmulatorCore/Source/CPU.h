@@ -10,7 +10,7 @@ public:
 	uint64_t clock;
 	uint32_t stepClock;
 
-	CPU(Bus* interconnect);
+	CPU(Bus& bus);
 
 	void Reset();
 	uint32_t Step();
@@ -30,7 +30,7 @@ private:
 		Opcode(AddressingMode addressing = AddressingMode::IMPL, void(CPU::* f)() = &CPU::NOP, std::string name = "Uninitialized", uint8_t cycles = 1, bool write = false, bool crossPageCycel = false);
 	};
 
-	Bus* bus;
+	Bus& bus;
 
 	union {
 		uint8_t f;

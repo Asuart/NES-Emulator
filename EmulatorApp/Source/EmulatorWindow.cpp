@@ -17,9 +17,9 @@ EmulatorWindow::EmulatorWindow(uint32_t width, uint32_t height)
 	}
 
 	PixieUI::Init();
-	PixieUI::SetCanvasSize(m_emulator.ppu.screenWidth, m_emulator.ppu.screenHeight);
+	PixieUI::SetCanvasSize(screenWidth, screenHeight);
 
-	m_viewportTexture = new PixieUI::Texture(0, 0, m_emulator.ppu.screenWidth, m_emulator.ppu.screenHeight);
+	m_viewportTexture = new PixieUI::Texture(0, 0, screenWidth, screenHeight);
 	m_layout.AttachElement(m_viewportTexture);
 }
 
@@ -61,37 +61,35 @@ bool EmulatorWindow::LoadROM(const std::string& romPath) {
 
 void EmulatorWindow::Start() {
 	double lastTime = glfwGetTime();
-	double timeAccumulator = 0;
 	while (!glfwWindowShouldClose(m_mainWindow)) {
 		glfwPollEvents();
 		UpdateKeyStates();
 
-		m_emulator.Run(256);
+		m_emulator.Run(29780);
+
+		double newTime = glfwGetTime();
+		double deltaTime = newTime - lastTime;
+		while (deltaTime < m_targetFrameTime) {
+			newTime = glfwGetTime();
+			deltaTime = newTime - lastTime;
+		}
+		std::string windowTitle = "NES Emulator: " + std::to_string(deltaTime * 1000) + "ms";
+		glfwSetWindowTitle(m_mainWindow, windowTitle.c_str());
+		lastTime = newTime;
 
 		if (m_emulator.ppu.frameReady) {
 			m_emulator.ppu.frameReady = false;
 			m_viewportTexture->UploadTexture(
-				m_emulator.ppu.screenWidth, m_emulator.ppu.screenHeight,
+				screenWidth, screenHeight,
 				m_emulator.ppu.screenTexture.pixels.data(),
 				GL_RGB, GL_UNSIGNED_BYTE
 			);
-
-			double newTime = glfwGetTime();
-			timeAccumulator += newTime - lastTime;
-			lastTime = newTime;
-			if (timeAccumulator < m_targetFrameTime) {
-				glfwWaitEventsTimeout(m_targetFrameTime - timeAccumulator);
-			}
-			std::string newTitle = "NES Emulator: " + std::to_string(timeAccumulator * 1000) + "ms";
-			glfwSetWindowTitle(m_mainWindow, newTitle.c_str());
-			timeAccumulator = 0;
 
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			m_layout.Draw();
 
 			glfwSwapBuffers(m_mainWindow);
-
 		}
 	}
 }

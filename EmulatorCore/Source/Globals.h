@@ -23,6 +23,13 @@ enum class MirroringMode : uint32_t {
 const int32_t prgBankSize = 16384;
 const int32_t chrBankSize = 8192;
 
+const uint32_t screenWidth = 256;
+const uint32_t screenHeight = 224;
+const uint32_t scanlineCount = 262;
+const uint32_t scanlineCycles = 341;
+const uint32_t charPageHeight = 240;
+const uint32_t patterTableSize = 256;
+
 struct RomHeader;
 struct OAMEntry;
 

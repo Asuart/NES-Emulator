@@ -22,7 +22,8 @@ public:
 	void WriteVRAM(uint16_t address, uint8_t value);
 	uint8_t ReadOAM(uint8_t address);
 	void WriteOAM(uint8_t address, uint8_t value);
-	OAMEntry GetOAMEntry(uint8_t index);
+	const OAMEntry& GetOAMEntry(uint8_t index);
+	OAMEntry* GetOAMBuffer();
 
 	void TriggerNMI();
 

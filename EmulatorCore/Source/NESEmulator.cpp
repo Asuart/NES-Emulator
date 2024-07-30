@@ -1,7 +1,7 @@
 #include "NESEmulator.h"
 
 NesEmulator::NesEmulator() 
-	: cpu(&bus), ppu(&bus), apu(&bus), io(&bus), mmc(new NMAP(bus)),
+	: cpu(bus), ppu(bus), apu(bus), io(bus), mmc(new NMAP(bus)),
 	bus(*this, cpu, ppu, io, apu, nullptr) {
 	bus.mmc = mmc;
 	Reset();

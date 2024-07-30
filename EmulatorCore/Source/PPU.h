@@ -9,28 +9,32 @@ class Bus;
 
 class PPU {
 public:
-	static const uint32_t screenWidth = 256;
-	static const uint32_t screenHeight = 224;
+	bool frameReady = false;
+
+	PPU(Bus& bus);
+
+	void Reset();
+	void Step(uint32_t cpuClocks);
+
+	void DrawPixel();
+	void PresentFrame();
+
+	uint8_t ReadRegister(uint8_t index, bool fetch = false);
+	void WriteRegister(uint8_t index, uint8_t value);
 
 private:
-	static const uint32_t charPageHeight = 240;
-	static const uint32_t patterTableSize = 256;
-	static const uint32_t scanlineCount = 262;
-	static const uint32_t scanlineCycles = 341;
-
-	const float cpuClockRatio = 3;
+	Bus& bus;
+	const DisplayMode displayMode = DisplayMode::NTSC;
+	const double cpuClockRatio = 3;
 	uint64_t clock = 0;
 	double clockAligner = 0;
 
 	Texture<Color> screenTexture = Texture<Color>(screenWidth, screenHeight);
 	Texture<Color> charPagesTexture = Texture<Color>(screenWidth * 2, charPageHeight * 2);
 	Texture<Color> patternTablesTexture = Texture<Color>(patterTableSize * 2, patterTableSize);
-	const DisplayMode displayMode = DisplayMode::NTSC;
-
-	Bus* bus;
 
 	union {
-		uint8_t ctrl;
+		uint8_t ctrl = 0;
 		struct {
 			uint8_t nametable : 2;
 			uint8_t increment : 1;
@@ -43,7 +47,7 @@ private:
 	};
 
 	union {
-		uint8_t mask;
+		uint8_t mask = 0;
 		struct {
 			uint8_t greyscale : 1;
 			uint8_t bgShowLeft : 1;
@@ -57,7 +61,7 @@ private:
 	};
 
 	union {
-		uint8_t status;
+		uint8_t status = 0;
 		struct {
 			uint8_t openBus : 5;
 			uint8_t sprOverflow : 1;
@@ -66,37 +70,27 @@ private:
 		};
 	};
 
-	uint8_t scroll;
-	uint8_t address;
-	uint8_t data, dataReadBuffer;
-	uint8_t oamAddress;
-	uint8_t oamData;
+	std::vector<OAMEntry> scanlineSprites;
+	const uint32_t spritesPerScanline = 8;
+	bool limitScanlineSprites = false;
+	bool spr0Evaluated = false;
 
-	uint16_t currentScanline, currentPixel;
-	uint16_t vramAddress, tempVramAddress;
-	uint16_t currentTile, nextTile;
-	uint8_t currentTileParams, nextTileParams;
+	uint8_t scroll = 0;
+	uint8_t address = 0;
+	uint8_t data = 0, dataReadBuffer = 0;
+	uint8_t oamAddress = 0;
+	uint8_t oamData = 0;
 
-	uint16_t v, t;
-	uint8_t x, w;
+	uint16_t currentScanline = 0, currentPixel = 0;
+	uint16_t vramAddress = 0, tempVramAddress = 0;
+	uint16_t currentTile = 0, nextTile = 0;
+	uint8_t currentTileParams = 0, nextTileParams = 0;
+
+	uint16_t v = 0, t = 0;
+	uint8_t x = 0, w = 0;
 
 	bool nmiTriggered = false;
 
-public:
-	bool frameReady = false;
-
-	PPU(Bus* interconnect);
-
-	void Reset();
-	void Step(uint32_t cpuClocks);
-
-	void DrawPixel();
-	void PresentFrame();
-
-	uint8_t ReadRegister(uint8_t index, bool fetch = false);
-	void WriteRegister(uint8_t index, uint8_t value);
-
-private:
 	void StartVB();
 	void EndVB();
 	void NMI();
@@ -110,7 +104,7 @@ private:
 	uint8_t ReadSPRPalette(uint8_t offset);
 	uint8_t ReadBGPalette(uint8_t offset);
 	Color GetUniversalBGColor();
-	void EvaluateSpriteOverflow();
+	void EvaluateSprites();
 
 	uint8_t GetTile(uint8_t nametable, uint16_t tileIndex) const;
 	uint8_t GetColorSet(uint8_t nametable, uint8_t tileX, uint8_t tileY) const;

@@ -3,7 +3,7 @@
 CPU::Opcode::Opcode(CPU::Opcode::AddressingMode _addressing, void(CPU::* f)(), std::string _name, uint8_t _cycles, bool _write, bool _crossPageCycle)
 	: addressing(_addressing), func(f), name(_name), cycles(_cycles), write(_write), crossPageCycle(_crossPageCycle) {}
 
-CPU::CPU(Bus* bus) : bus(bus) {}
+CPU::CPU(Bus& bus) : bus(bus) {}
 
 void CPU::Reset() {
 	f = 0x24;
@@ -14,21 +14,21 @@ void CPU::Reset() {
 }
 
 uint16_t CPU::GetResetAddress() {
-	return (uint16_t)bus->Read(0xfffc, true) | ((uint16_t)bus->Read(0xfffd, true) << 8);
+	return (uint16_t)bus.Read(0xfffc, true) | ((uint16_t)bus.Read(0xfffd, true) << 8);
 }
 
 uint16_t CPU::GetNMIAddress() {
-	return (uint16_t)bus->Read(0xfffa, true) | ((uint16_t)bus->Read(0xfffb, true) << 8);
+	return (uint16_t)bus.Read(0xfffa, true) | ((uint16_t)bus.Read(0xfffb, true) << 8);
 }
 
 uint16_t CPU::GetBreakAddress() {
-	return (uint16_t)bus->Read(0xfffe, true) | ((uint16_t)bus->Read(0xffff, true) << 8);
+	return (uint16_t)bus.Read(0xfffe, true) | ((uint16_t)bus.Read(0xffff, true) << 8);
 }
 
 uint32_t CPU::Step() {
 	disasmPC = pc;
 
-	opcode = bus->Read(pc++, true);
+	opcode = bus.Read(pc++, true);
 	stepClock = opcodeTable[opcode].cycles;
 	Decode();
 
@@ -53,31 +53,31 @@ void CPU::WriteBack() {
 		ac = value;
 		return;
 	}
-	bus->Write(address, value);
+	bus.Write(address, value);
 }
 
 void CPU::Push8(uint8_t val) {
-	bus->Write(0x100 + (uint16_t)sp, val);
+	bus.Write(0x100 + (uint16_t)sp, val);
 	sp--;
 }
 
 void CPU::Push16(uint16_t val) {
-	bus->Write(0x100 + (uint16_t)sp, (val >> 8) & 0xff);
+	bus.Write(0x100 + (uint16_t)sp, (val >> 8) & 0xff);
 	sp--;
-	bus->Write(0x100 + (uint16_t)sp, val & 0xff);
+	bus.Write(0x100 + (uint16_t)sp, val & 0xff);
 	sp--;
 }
 
 uint8_t CPU::Pull8() {
 	sp++;
-	return bus->Read(0x100 + (uint16_t)sp);
+	return bus.Read(0x100 + (uint16_t)sp);
 }
 
 uint16_t CPU::Pull16() {
 	sp++;
-	uint16_t lsb = bus->Read(0x100 + (uint16_t)sp);
+	uint16_t lsb = bus.Read(0x100 + (uint16_t)sp);
 	sp++;
-	uint16_t msb = (uint16_t)bus->Read(0x100 + (uint16_t)sp);
+	uint16_t msb = (uint16_t)bus.Read(0x100 + (uint16_t)sp);
 	return (msb << 8) | lsb;
 }
 
@@ -91,77 +91,77 @@ void CPU::Decode() {
 	case Opcode::AddressingMode::IMPL:
 		break;
 	case Opcode::AddressingMode::REL:
-		value = bus->Read(pc, true);
+		value = bus.Read(pc, true);
 		pc++;
 		address = pc + (int8_t)value;
-		value = bus->Read(address, opcodeTable[opcode].write);
+		value = bus.Read(address, opcodeTable[opcode].write);
 		break;
 	case Opcode::AddressingMode::IMM:
-		value = bus->Read(pc, true);
+		value = bus.Read(pc, true);
 		pc++;
 		break;
 	case Opcode::AddressingMode::ZP:
-		address = bus->Read(pc, true);
+		address = bus.Read(pc, true);
 		pc++;
-		value = bus->Read(address & 0xff, opcodeTable[opcode].write);
+		value = bus.Read(address & 0xff, opcodeTable[opcode].write);
 		break;
 	case Opcode::AddressingMode::ZPX:
-		address = (bus->Read(pc, true) + x) & 0xff;
+		address = (bus.Read(pc, true) + x) & 0xff;
 		pc++;
-		value = bus->Read(address & 0xff, opcodeTable[opcode].write);
+		value = bus.Read(address & 0xff, opcodeTable[opcode].write);
 		break;
 	case Opcode::AddressingMode::ZPY:
-		address = (bus->Read(pc, true) + y) & 0xff;
+		address = (bus.Read(pc, true) + y) & 0xff;
 		pc++;
-		value = bus->Read(address & 0xff, opcodeTable[opcode].write);
+		value = bus.Read(address & 0xff, opcodeTable[opcode].write);
 		break;
 	case Opcode::AddressingMode::ABS:
-		address = (uint16_t)bus->Read(pc, true) | ((uint16_t)bus->Read(pc + 1, true) << 8);
+		address = (uint16_t)bus.Read(pc, true) | ((uint16_t)bus.Read(pc + 1, true) << 8);
 		pc += 2;
-		value = bus->Read(address, opcodeTable[opcode].write);
+		value = bus.Read(address, opcodeTable[opcode].write);
 		break;
 	case Opcode::AddressingMode::ABSX:
-		baseAddress = ((uint16_t)bus->Read(pc, true) | ((uint16_t)bus->Read(pc + 1, true) << 8));
+		baseAddress = ((uint16_t)bus.Read(pc, true) | ((uint16_t)bus.Read(pc + 1, true) << 8));
 		address = baseAddress + x;
 		if (opcodeTable[opcode].crossPageCycle && ((address & 0xff00) != (baseAddress & 0xff00))) {
 			stepClock++;
 		}
 		pc += 2;
-		value = bus->Read(address, opcodeTable[opcode].write);
+		value = bus.Read(address, opcodeTable[opcode].write);
 		break;
 	case Opcode::AddressingMode::ABSY:
-		baseAddress = ((uint16_t)bus->Read(pc, true) | ((uint16_t)bus->Read(pc + 1, true) << 8));
+		baseAddress = ((uint16_t)bus.Read(pc, true) | ((uint16_t)bus.Read(pc + 1, true) << 8));
 		address = baseAddress + y;
 		if (opcodeTable[opcode].crossPageCycle && ((address & 0xff00) != (baseAddress & 0xff00))) {
 			stepClock++;
 		}
 		pc += 2;
-		value = bus->Read(address, opcodeTable[opcode].write);
+		value = bus.Read(address, opcodeTable[opcode].write);
 		break;
 	case Opcode::AddressingMode::ACC:
 		value = ac;
 		break;
 	case Opcode::AddressingMode::IND:
-		address = bus->Read(pc, true) | (bus->Read(PageWrapAdd(pc), true) << 8);
-		address = (uint16_t)bus->Read(address, true) | ((uint16_t)bus->Read(PageWrapAdd(address), true) << 8);
+		address = bus.Read(pc, true) | (bus.Read(PageWrapAdd(pc), true) << 8);
+		address = (uint16_t)bus.Read(address, true) | ((uint16_t)bus.Read(PageWrapAdd(address), true) << 8);
 		pc += 2;
-		value = bus->Read(address, opcodeTable[opcode].write);
+		value = bus.Read(address, opcodeTable[opcode].write);
 		break;
 	case Opcode::AddressingMode::INDX:
-		value = (bus->Read(pc, true) + x);
+		value = (bus.Read(pc, true) + x);
 		pc++;
-		address = (uint16_t)bus->Read(value, true) | ((uint16_t)bus->Read((value + 1) & 0xff, true) << 8);
-		value = bus->Read(address, opcodeTable[opcode].write);
+		address = (uint16_t)bus.Read(value, true) | ((uint16_t)bus.Read((value + 1) & 0xff, true) << 8);
+		value = bus.Read(address, opcodeTable[opcode].write);
 		break;
 	case Opcode::AddressingMode::INDY:
-		value = (bus->Read(pc, true));
+		value = (bus.Read(pc, true));
 		pc++;
-		baseAddress = ((uint16_t)bus->Read(value, true) | ((uint16_t)bus->Read((value + 1) & 0xff, true) << 8));
+		baseAddress = ((uint16_t)bus.Read(value, true) | ((uint16_t)bus.Read((value + 1) & 0xff, true) << 8));
 		address = baseAddress + y;
 		if (opcodeTable[opcode].crossPageCycle && ((address & 0xff00) != (baseAddress & 0xff00))) {
 			stepClock++;
 		}
-		value = bus->Read(address, opcodeTable[opcode].write);
+		value = bus.Read(address, opcodeTable[opcode].write);
 		break;
 	default:
 		std::cout << "Unsupported addressing mode: "<<(uint8_t)opcodeTable[opcode].addressing << std::endl;

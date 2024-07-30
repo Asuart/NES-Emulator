@@ -4,12 +4,12 @@
 
 class IO {
 public:
-	Bus* bus = nullptr;
+	Bus& bus;
 	std::array<uint8_t, 0x20> registers = std::array<uint8_t, 0x20>();
 	std::array<uint8_t, 8> keyStates = std::array<uint8_t, 8>();
 	uint8_t readKeyNum = 0;
 
-	IO(Bus* bus);
+	IO(Bus& bus);
 
 	void Reset();
 	uint8_t ReadRegister(uint8_t addr, bool fetch);

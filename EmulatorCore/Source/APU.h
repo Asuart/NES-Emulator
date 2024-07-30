@@ -110,7 +110,7 @@ public:
 		uint8_t frameCounter;
 	};
 
-	APU(Bus* bus);
+	APU(Bus& bus);
 
 	void Reset();
 	void Step(uint32_t cpuCycles);
@@ -121,7 +121,7 @@ public:
 private:
 	const double cpuClockRatio = 0.5;
 
-	Bus* bus;
+	Bus& bus;
 	uint64_t clock;
 	double clockAligner;
 	uint32_t clockAccumulator;
