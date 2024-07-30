@@ -2,21 +2,35 @@
 
 EmulatorWindow emulatorWindow(512, 448);
 
-void drop_callback(GLFWwindow* window, int count, const char** paths) {
+void WindowSizeCallback(GLFWwindow* window, int width, int height) {
+	emulatorWindow.HandleResolutionChange(width, height);
+}
+
+void DropCallback(GLFWwindow* window, int count, const char** paths) {
 	emulatorWindow.LoadROM(paths[0]);
 }
 
-void window_size_callback(GLFWwindow* window, int width, int height) {
-	emulatorWindow.SetResolution(width, height);
-	glViewport(0, 0, width, height);
+void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+	emulatorWindow.HandleMouseEvent(button, action);
+}
+
+void CursorPosCallback(GLFWwindow* window, double x, double y) {
+	emulatorWindow.HandleMouseMove(x, y);
+}
+
+void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int modes) {
+	emulatorWindow.HandleKeyEvent(key, scancode, action);
 }
 
 int main(int argc, char** argv) {
 	std::ios_base::sync_with_stdio(false);
 	std::cout << std::hex;
 
-	glfwSetWindowSizeCallback(emulatorWindow.m_mainWindow, window_size_callback);
-	glfwSetDropCallback(emulatorWindow.m_mainWindow, drop_callback);
+	glfwSetWindowSizeCallback(emulatorWindow.m_mainWindow, WindowSizeCallback);
+	glfwSetDropCallback(emulatorWindow.m_mainWindow, DropCallback);
+	glfwSetMouseButtonCallback(emulatorWindow.m_mainWindow, MouseButtonCallback);
+	glfwSetCursorPosCallback(emulatorWindow.m_mainWindow, CursorPosCallback);
+	glfwSetKeyCallback(emulatorWindow.m_mainWindow, KeyCallback);
 
 	if (argc > 2) {
 		std::cout << "Programm uses first argument as a path to a ROM file. All other are ignored.\n";
