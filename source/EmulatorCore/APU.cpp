@@ -120,7 +120,8 @@ uint8_t APU::Read(uint16_t address, bool fetch) {
 }
 
 void APU::Write(uint16_t address, uint8_t value) {
-
+	(void)address;
+	(void)value;
 }
 
 void APU::ClockQuarterFrame() {

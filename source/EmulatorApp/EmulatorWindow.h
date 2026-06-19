@@ -5,7 +5,7 @@
 #include <PixieUI/PixieUI.h>
 #include <filesystem>
 #include "ButtonMap.h"
-#include "NESEmulator.h"
+#include "EmulatorCore/NESEmulator.h"
 #include "EmulatorWindowUI.h"
 
 class EmulatorWindowUI;

@@ -1,6 +1,6 @@
 #pragma once
 #include <PixieUI/PixieUI.h>
-#include "NesEmulator.h"
+#include "EmulatorCore/NesEmulator.h"
 #include "ButtonMap.h"
 #include "EmulatorWindow.h"
 

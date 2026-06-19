@@ -1,0 +1,2 @@
+add_subdirectory(EmulatorCore)
+add_subdirectory(EmulatorApp)
